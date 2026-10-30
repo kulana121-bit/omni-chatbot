@@ -170,6 +170,11 @@ object ToolPolicy {
             }
         }
         val out = JSONObject()
+        val keys = obj.keys()
+        while (keys.hasNext()) {
+            val k = keys.next()
+            if (!spec.fields.containsKey(k)) return Verdict.Rejected(tag.tool, "unknown argument \"$k\"")
+        }
         for ((k, f) in spec.fields) {
             if (!obj.has(k) || obj.isNull(k)) {
                 if (f.required) return Verdict.Rejected(tag.tool, "missing \"$k\"")

@@ -208,7 +208,14 @@ class ChatStore(context: Context) {
 
     fun load(): List<Conversation> = runCatching {
         if (!file.exists()) return emptyList()
-        val arr = JSONArray(file.readText())
+        val text = file.readText()
+        val arr = runCatching { JSONArray(text) }.getOrElse {
+            // Whole file corrupted, quarantine it
+            val corrupt = File(file.parentFile, "chats.json.corrupt")
+            file.copyTo(corrupt, overwrite = true)
+            file.delete()
+            return emptyList()
+        }
         (0 until arr.length()).mapNotNull { i -> runCatching {
             val o = arr.getJSONObject(i)
             val msgs = o.getJSONArray("messages")
@@ -252,9 +259,11 @@ class ChatStore(context: Context) {
     fun save(list: List<Conversation>) {
         runCatching {
             val arr = JSONArray()
-            list.forEach { c ->
+            // Cap to 100 recent conversations
+            list.take(100).forEach { c ->
                 val msgs = JSONArray()
-                c.messages.forEach { m ->
+                // Cap to 200 most recent messages per conversation
+                c.messages.takeLast(200).forEach { m ->
                     msgs.put(JSONObject().apply {
                         put("id", m.id); put("role", m.role); put("content", m.content)
                         put("err", m.isError); put("model", m.model); put("think", m.thinking); put("mem", m.memoryNote); put("ts", m.thinkSecs); put("apps", m.appNote)

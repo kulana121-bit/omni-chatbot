@@ -93,11 +93,17 @@ class MainActivity : ComponentActivity() {
 private fun CrashReportDialog() {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val file = java.io.File(ctx.filesDir, OmniApp.CRASH_FILE)
-    var report by androidx.compose.runtime.remember { mutableStateOf(if (file.exists()) runCatching { file.readText() }.getOrNull() else null) }
+    var dismissed by androidx.compose.runtime.remember { mutableStateOf(false) }
+    val report by androidx.compose.runtime.produceState<String?>(initialValue = null) {
+        if (file.exists()) {
+            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { file.readText() }.getOrNull() }
+        }
+    }
     val clip = androidx.compose.ui.platform.LocalClipboardManager.current
-    val r = report ?: return
+    val r = report
+    if (r == null || dismissed) return
     androidx.compose.material3.AlertDialog(
-        onDismissRequest = { file.delete(); report = null },
+        onDismissRequest = { file.delete(); dismissed = true },
         title = { androidx.compose.material3.Text("App crashed last time") },
         text = {
             androidx.compose.foundation.layout.Column {
@@ -111,12 +117,12 @@ private fun CrashReportDialog() {
             }
         },
         confirmButton = {
-            androidx.compose.material3.TextButton(onClick = { clip.setText(androidx.compose.ui.text.AnnotatedString(r)); file.delete(); report = null }) {
+            androidx.compose.material3.TextButton(onClick = { clip.setText(androidx.compose.ui.text.AnnotatedString(r)); file.delete(); dismissed = true }) {
                 androidx.compose.material3.Text("Copy report")
             }
         },
         dismissButton = {
-            androidx.compose.material3.TextButton(onClick = { file.delete(); report = null }) { androidx.compose.material3.Text("Close") }
+            androidx.compose.material3.TextButton(onClick = { file.delete(); dismissed = true }) { androidx.compose.material3.Text("Close") }
         }
     )
 

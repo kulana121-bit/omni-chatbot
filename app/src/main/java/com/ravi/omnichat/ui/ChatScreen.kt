@@ -421,16 +421,18 @@ private fun UserBubble(m: ChatMessage) {
 
 @Composable
 private fun AttachmentPreview(a: Attachment) {
-    val bmp = remember(a) {
-        val b64 = if (a.isVideo) a.frames.firstOrNull() else if (a.isImage) a.base64 else null
-        if (b64 != null) runCatching {
-            val bytes = Base64.decode(b64, Base64.NO_WRAP)
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-        }.getOrNull() else null
+    val bmp by androidx.compose.runtime.produceState<androidx.compose.ui.graphics.ImageBitmap?>(initialValue = null, a) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val b64 = if (a.isVideo) a.frames.firstOrNull() else if (a.isImage) a.base64 else null
+            if (b64 != null) runCatching {
+                val bytes = Base64.decode(b64, Base64.NO_WRAP)
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+            }.getOrNull() else null
+        }
     }
     if (bmp != null) {
         Box(contentAlignment = Alignment.Center) {
-            Image(bmp, a.name, Modifier.size(120.dp).clip(RoundedCornerShape(24.dp)), contentScale = ContentScale.Crop)
+            Image(bmp!!, a.name, Modifier.size(120.dp).clip(RoundedCornerShape(24.dp)), contentScale = ContentScale.Crop)
             if (a.isVideo) Box(Modifier.size(40.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
                 Icon(Icons.Filled.PlayArrow, null, tint = Color.White)
             }
@@ -561,7 +563,12 @@ private fun ThinkingBlock(text: String, active: Boolean, secs: Int) {
     var open by remember { mutableStateOf(false) }
     // Live seconds counter while the model is thinking, "Thought for Ns" afterwards (Claude style).
     var elapsed by remember { mutableIntStateOf(0) }
-    LaunchedEffect(active) { if (active) while (true) { kotlinx.coroutines.delay(1000); elapsed++ } }
+    LaunchedEffect(active) {
+        if (active) {
+            elapsed = 0
+            while (true) { kotlinx.coroutines.delay(1000); elapsed++ }
+        }
+    }
     val label = when {
         active -> if (elapsed > 0) "Thinking · ${elapsed}s" else "Thinking"
         secs > 0 -> "Thought for ${secs}s"
