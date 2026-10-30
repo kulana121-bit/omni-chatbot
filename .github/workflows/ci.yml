@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # Supply chain: the wrapper JAR must match a published Gradle checksum
+      # (the distribution itself is pinned by distributionSha256Sum).
+      - uses: gradle/actions/wrapper-validation@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Compile (debug, no signing secrets needed)
+        run: ./gradlew --no-daemon assembleStandardDebug
+
+      - name: Unit, security and Robolectric tests
+        run: ./gradlew --no-daemon testStandardDebugUnitTest
+
+      - name: Android lint
+        run: ./gradlew --no-daemon lintStandardDebug
+
+      - name: Release configuration guard must reject missing signing config
+        run: |
+          if ./gradlew --no-daemon verifyReleaseSigning; then
+            echo "verifyReleaseSigning passed without a keystore - guard is broken"; exit 1
+          else
+            echo "Guard correctly refused to sign without release credentials"
+          fi
+
+      # Release builds must run in CI too: R8/minify breakage must not ship blind.
+      # Signing uses a throwaway keystore generated on the runner (never a repo secret,
+      # never the debug key); release.yml and its real secrets are untouched.
+      - name: Create ephemeral CI keystore
+        run: |
+          umask 077
+          mkdir -p "$RUNNER_TEMP/ci-sign"
+          keytool -genkeypair -v -keystore "$RUNNER_TEMP/ci-sign/ci.jks" -alias omnichat-ci \
+            -keyalg RSA -keysize 2048 -validity 1 -storepass ci-ephemeral -keypass ci-ephemeral \
+            -dname "CN=OmniChat CI, O=CI, C=IN"
+          {
+            echo "storeFile=$RUNNER_TEMP/ci-sign/ci.jks"
+            echo "storePassword=ci-ephemeral"
+            echo "keyAlias=omnichat-ci"
+            echo "keyPassword=ci-ephemeral"
+          } > "$RUNNER_TEMP/ci-sign/keystore.properties"
+          echo "OMNICHAT_KEYSTORE_PROPERTIES=$RUNNER_TEMP/ci-sign/keystore.properties" >> "$GITHUB_ENV"
+
+      - name: Release build (R8) with ephemeral keystore
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Verify release APK signature
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          for apk in app/build/outputs/apk/standard/release/*.apk; do
+            "$APKSIGNER" verify --print-certs "$apk"
+            if "$APKSIGNER" verify --print-certs "$apk" | grep -qi "Android Debug"; then
+              echo "Release APK is debug-signed"; exit 1
+            fi
+          done
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnichat-apks
+          path: |
+            app/build/outputs/apk/standard/debug/*.apk
+            app/build/outputs/apk/standard/release/*.apk
+
+      - name: Remove ephemeral signing material
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/ci-sign"
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            app/build/reports/
+            app/build/test-results/
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Flags dependencies with known advisories (GitHub Advisory Database) added or changed by the PR.
+      # Requires the dependency graph to be enabled for the repository.
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
