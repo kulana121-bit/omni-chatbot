@@ -746,7 +746,8 @@ private fun UsageSection(vm: ChatViewModel) {
     var clock by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(30_000); clock++ } }
     val counts by androidx.compose.runtime.produceState(initialValue = emptyMap<String, com.ravi.omnichat.data.Counter>(), tick, clock) {
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.usage.todayCounts() }
+        val fresh = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.usage.todayCounts() }
+        value = fresh
     }
     val cs = MaterialTheme.colorScheme
     SectionCard("Usage", Icons.Outlined.DataUsage) {
@@ -886,7 +887,8 @@ private fun UsageRow(vm: ChatViewModel, scope: String, c: com.ravi.omnichat.data
         }
         // last 7 days, tokens
         val hist by androidx.compose.runtime.produceState(initialValue = emptyList<Pair<java.time.LocalDate, com.ravi.omnichat.data.Counter>>(), scope, vm.usageTick) {
-            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.usage.history(scope, 7) }
+            val fresh = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { vm.usage.history(scope, 7) }
+            value = fresh
         }
         val max = hist.maxOf { it.second.tokens }.coerceAtLeast(1)
         if (hist.any { it.second.requests > 0 }) {
