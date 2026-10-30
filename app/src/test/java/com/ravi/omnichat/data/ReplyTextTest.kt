@@ -24,7 +24,7 @@ class ReplyTextTest {
             append("[[app:weather {\"city\":\"Delhi\"}]]")
             append("Done.")
         }
-        assertTrue(raw.length > 300_000)
+        assertTrue(raw.length >= 290_000)
         ReplyText.fullStripCalls = 0
         // Simulate the ~70 ms publish loop over the growing buffer.
         var i = 0

@@ -163,6 +163,11 @@ object ToolPolicy {
         if (json.length > ToolTagParser.MAX_JSON) return Verdict.Rejected(tag.tool, "arguments too large")
         val obj = runCatching { JSONObject(json) }.getOrNull() ?: return Verdict.Rejected(tag.tool, "arguments are not valid JSON")
         val out = JSONObject()
+        val keys = obj.keys()
+        while (keys.hasNext()) {
+            val k = keys.next()
+            if (!spec.fields.containsKey(k)) return Verdict.Rejected(tag.tool, "unknown argument \"$k\"")
+        }
         for ((k, f) in spec.fields) {
             if (!obj.has(k) || obj.isNull(k)) {
                 if (f.required) return Verdict.Rejected(tag.tool, "missing \"$k\"")
