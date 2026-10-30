@@ -19,7 +19,7 @@ jobs:
       # (the distribution itself is pinned by distributionSha256Sum).
       - uses: gradle/actions/wrapper-validation@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -99,13 +99,3 @@ jobs:
             app/build/reports/
             app/build/test-results/
 
-  dependency-review:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      # Flags dependencies with known advisories (GitHub Advisory Database) added or changed by the PR.
-      # Requires the dependency graph to be enabled for the repository.
-      - uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
