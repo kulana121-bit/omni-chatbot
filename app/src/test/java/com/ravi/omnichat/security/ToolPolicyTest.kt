@@ -28,7 +28,7 @@ class ToolPolicyTest {
     }
 
     @Test fun disabledToolsRejected() {
-        val v = ToolPolicy.validate(one("[[app:contacts_search {\"name\":\"Ma\"}]]")) { false }
+        val v = ToolPolicy.validate(one("[[app:contacts_search {\"name\":\"Ma\"}]]"), { false })
         assertEquals("this app is turned off", (v as ToolPolicy.Verdict.Rejected).reason)
     }
 
