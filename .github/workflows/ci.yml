@@ -26,9 +26,9 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-            # Uploads via API/web drop the executable bit on gradlew; restore it.
-                  - name: Make gradlew executable
-                          run: chmod +x gradlew
+      # Uploads via API/web drop the executable bit on gradlew; restore it.
+      - name: Make gradlew executable
+        run: chmod +x gradlew
 
       - name: Compile (debug, no signing secrets needed)
         run: ./gradlew --no-daemon assembleStandardDebug
