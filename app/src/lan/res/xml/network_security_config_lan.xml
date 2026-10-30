@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DEBUG-ONLY "lan" flavour: permits cleartext so a LAN Ollama / LM Studio (e.g. 192.168.x.x)
+  can be used while developing. This flavour has no release variant (disabled in
+  app/build.gradle.kts), so this config can never ship. NetGuard/EndpointPolicy still
+  restrict HTTP to private/loopback hosts behind the user's "Allow HTTP" setting.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
