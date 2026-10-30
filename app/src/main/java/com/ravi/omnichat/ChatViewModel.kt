@@ -923,7 +923,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                                     com.ravi.omnichat.security.ToolPolicy.Risk.OPEN -> if (doneActions.size < com.ravi.omnichat.security.ToolPolicy.MAX_ACTIONS_PER_REPLY && doneActions.add(sig))
                                         tools.runAction(call)?.let { appNotes += it }
                                     com.ravi.omnichat.security.ToolPolicy.Risk.CONFIRM -> if (doneActions.size < com.ravi.omnichat.security.ToolPolicy.MAX_ACTIONS_PER_REPLY && doneActions.add(sig))
-                                        pendingActions.add(PendingAction(assistant.id, call, com.ravi.omnichat.security.ToolPolicy.describe(v.tool, v.args)))
+                                        pendingActions.add(PendingAction(assistant.id, call, com.ravi.omnichat.security.ToolPolicy.describe(v.tool, v.args ?: org.json.JSONObject())))
                                 }
                             }
                         }

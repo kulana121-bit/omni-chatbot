@@ -220,7 +220,7 @@ object ToolPolicy {
             "sms" -> "Open SMS to ${s("to")} with: \"${s("text")}\""
             "whatsapp" -> "Open WhatsApp" + (if (s("to").isNotBlank()) " to ${s("to")}" else "") + " with: \"${s("text")}\""
             "email" -> "Open email to ${s("to")}, subject \"${s("subject")}\""
-            "alarm" -> "Set an alarm for %02d:%02d".format(a.optInt("hour"), a.optInt("minute")) + (if (s("label").isNotBlank()) " (${s("label")})" else "")
+            "alarm" -> "Set an alarm for %02d:%02d".format(java.util.Locale.US, a.optInt("hour"), a.optInt("minute")) + (if (s("label").isNotBlank()) " (${s("label")})" else "")
             "timer" -> "Start a ${a.optInt("seconds")} second timer"
             "open_url" -> "Open this link: ${s("url")}"
             "copy" -> "Replace your clipboard with: \"${s("text")}\""

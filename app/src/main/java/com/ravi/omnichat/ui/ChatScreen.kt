@@ -683,12 +683,11 @@ private fun InputBar(vm: ChatViewModel) {
             val focused by focusSrc.collectIsFocusedAsState()
             val borderC by androidx.compose.animation.animateColorAsState(
                 if (focused) MaterialTheme.colorScheme.primary.copy(alpha = 0.55f) else MaterialTheme.colorScheme.outlineVariant, tween(250), label = "border")
-            val lift by androidx.compose.animation.core.animateDpAsState(if (focused) 8.dp else 3.dp, spring(0.7f, 300f), label = "lift")
             Surface(
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 border = androidx.compose.foundation.BorderStroke(if (focused) 1.5.dp else 1.dp, borderC),
-                shadowElevation = lift,
+                shadowElevation = 0.dp,
                 modifier = Modifier.animateContentSize(spring(dampingRatio = 0.8f, stiffness = 400f))
             ) {
                 Column(Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
