@@ -154,7 +154,7 @@ object ToolPolicy {
 
     /**
      * Validates a parsed tag. [enabled] says whether the app owning the tool is switched on by the user.
-     * Unknown argument keys are dropped; wrong types, out-of-range numbers and oversized strings reject the call.
+     * Unknown argument keys reject the call, as do wrong types, out-of-range numbers and oversized strings.
      */
     fun validate(tag: ParsedTag, enabled: (String) -> Boolean, untrustedSeen: Boolean = false): Verdict {
         val spec = specs[tag.tool] ?: return Verdict.Rejected(tag.tool, "unknown tool")
@@ -170,11 +170,6 @@ object ToolPolicy {
             }
         }
         val out = JSONObject()
-        val keys = obj.keys()
-        while (keys.hasNext()) {
-            val k = keys.next()
-            if (!spec.fields.containsKey(k)) return Verdict.Rejected(tag.tool, "unknown argument \"$k\"")
-        }
         for ((k, f) in spec.fields) {
             if (!obj.has(k) || obj.isNull(k)) {
                 if (f.required) return Verdict.Rejected(tag.tool, "missing \"$k\"")
