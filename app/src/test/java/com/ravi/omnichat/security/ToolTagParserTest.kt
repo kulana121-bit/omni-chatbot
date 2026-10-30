@@ -10,7 +10,7 @@ class ToolTagParserTest {
         val tags = ToolTagParser.parse("""[[app:copy {"text":"a {nested} brace and ]] inside"}]]""")
         assertEquals(1, tags.size)
         assertEquals("copy", tags[0].tool)
-        val v = ToolPolicy.validate(tags[0]) { true } as ToolPolicy.Verdict.Ok
+        val v = ToolPolicy.validate(tags[0], { true }) as ToolPolicy.Verdict.Ok
         assertEquals("a {nested} brace and ]] inside", v.args.getString("text"))
     }
 
@@ -18,7 +18,7 @@ class ToolTagParserTest {
         val text = "नमस्ते 🙏 यह रहा: [[app:weather {\"city\":\"दिल्ली\"}]] धन्यवाद"
         val tags = ToolTagParser.parse(text)
         assertEquals(1, tags.size)
-        val v = ToolPolicy.validate(tags[0]) { true } as ToolPolicy.Verdict.Ok
+        val v = ToolPolicy.validate(tags[0], { true }) as ToolPolicy.Verdict.Ok
         assertEquals("दिल्ली", v.args.getString("city"))
         assertEquals("नमस्ते 🙏 यह रहा:  धन्यवाद", ToolTagParser.strip(text))
     }
@@ -41,7 +41,7 @@ class ToolTagParserTest {
     @Test fun escapedQuotesInsideString() {
         val tags = ToolTagParser.parse("""[[app:sms {"to":"123456","text":"say \"hi\" } now"}]]""")
         assertEquals(1, tags.size)
-        val v = ToolPolicy.validate(tags[0]) { true } as ToolPolicy.Verdict.Ok
+        val v = ToolPolicy.validate(tags[0], { true }) as ToolPolicy.Verdict.Ok
         assertEquals("say \"hi\" } now", v.args.getString("text"))
     }
 }
