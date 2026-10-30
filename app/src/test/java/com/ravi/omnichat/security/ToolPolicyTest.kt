@@ -28,7 +28,7 @@ class ToolPolicyTest {
     }
 
     @Test fun disabledToolsRejected() {
-        val v = ToolPolicy.validate(one("[[app:contacts_search {\"name\":\"Ma\"}]]")) { false }
+        val v = ToolPolicy.validate(one("[[app:contacts_search {\"name\":\"Ma\"}]]"), { false })
         assertEquals("this app is turned off", (v as ToolPolicy.Verdict.Rejected).reason)
     }
 
@@ -57,9 +57,10 @@ class ToolPolicyTest {
         assertTrue(tags.isEmpty())
     }
 
-    @Test fun unknownArgumentKeysDropped() {
-        val v = ToolPolicy.validate(one("[[app:weather {\"city\":\"Delhi\",\"grantPermission\":true}]]"), all) as ToolPolicy.Verdict.Ok
-        assertFalse(v.args.has("grantPermission"))
+    @Test fun unknownArgumentKeysRejected() {
+        val v = ToolPolicy.validate(one("[[app:weather {\"city\":\"Delhi\",\"grantPermission\":true}]]"), all)
+        assertTrue(v is ToolPolicy.Verdict.Rejected)
+        assertEquals("unknown argument \"grantPermission\"", (v as ToolPolicy.Verdict.Rejected).reason)
     }
 
     @Test fun consequentialActionsNeedConfirmation() {
