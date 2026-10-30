@@ -98,7 +98,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
 
-tasks.withType<Test>().configureEach { maxHeapSize = "1g" }
+tasks.withType<Test>().configureEach { maxHeapSize = "2g" } // 1g left the Robolectric launch test GC-thrashing into OutOfMemoryError (28 min crawl, CI run 18)
 
 // ---- Release signing guard: fail instead of producing a debug-signed or unsigned "release".
 val verifyReleaseSigning by tasks.registering {
